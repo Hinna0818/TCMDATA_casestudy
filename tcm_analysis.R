@@ -43,6 +43,7 @@ ggsave("go_sankey.pdf", gs, width = 12, height = 14)
 ppi <- getPPI(qx_new$target, taxID = "9606")
 ppi <- compute_nodeinfo(ppi)
 
+## PPI network
 library(ggrepel)
 library(ggplot2)
 library(ggtangle)
@@ -90,3 +91,15 @@ p1 <- ggtangle::ggplot(ppi, layout = "kk") +
     text            = element_text(face = "bold"))
 
 print(p1)
+
+## rank hub nodes
+ppi_res <- rank_ppi_nodes(ppi)
+ppi_new <- ppi_res[["graph"]]
+ppi_res <- ppi_res[["table"]]
+
+
+## radar plot for hub nodes
+top_nodes <- ppi_res$name |> head(5)
+node_info <- get_node_profile(ppi_res, node_name = top_nodes[2])
+p2 <- radar_plot(node_info, title = "Centrality profile of IL1B")
+p2
