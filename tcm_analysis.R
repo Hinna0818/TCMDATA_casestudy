@@ -41,6 +41,9 @@ ggsave("go_sankey.pdf", gs, width = 12, height = 14)
 
 ## PPI analysis
 ppi <- getPPI(qx_new$target, taxID = "9606")
+
+# PPI subset
+ppi <- ppi_subset(ppi, score_cutoff = 0.7)
 ppi <- compute_nodeinfo(ppi)
 
 ## PPI network
@@ -92,6 +95,52 @@ p1 <- ggtangle::ggplot(ppi, layout = "kk") +
 
 print(p1)
 
+## delete two outlier nodes
+nodes_to_remove <- c("TOP2A", "HMMR")
+ppi <- delete_vertices(ppi, nodes_to_remove)
+
+p2 <- ggtangle::ggplot(ppi, layout = "kk") +
+  geom_edge(
+    colour  = "grey80",
+    alpha   = 0.75,
+    linewidth = 0.15,
+    lineend  = "round"
+  ) +
+  geom_point(
+    aes(colour = degree, size = betweenness),
+    alpha = 0.85
+  ) +
+  geom_text_repel(
+    aes(label = name, colour = degree),
+    size          = 3.5,
+    fontface      = "bold",     
+    force         = 1.8,
+    max.overlaps  = 50,
+    box.padding   = unit(0.2, "lines"),
+    point.padding = unit(0.15, "lines"),
+    segment.size  = 0.1,
+    segment.color = "grey80",
+    show.legend   = FALSE
+  ) +
+  scale_color_gradientn(
+    name    = "Degree",
+    colours = c("#4DBBD5FF", "#E64B35FF")
+  ) +
+  scale_size_continuous(
+    name  = "Betweenness",
+    range = c(1.5, 6)
+  ) +
+  theme_void() +
+  theme(
+    legend.position = "right",
+    legend.title    = element_text(size = 11, face = "bold"),
+    legend.text     = element_text(size = 9),
+    plot.margin     = unit(c(0.6, 0.8, 0.6, 0.8), "cm"),
+    plot.background = element_rect(fill = "white", colour = NA),
+    text            = element_text(face = "bold"))
+
+print(p2)
+
 ## rank hub nodes
 ppi_res <- rank_ppi_nodes(ppi)
 ppi_new <- ppi_res[["graph"]]
@@ -100,6 +149,19 @@ ppi_res <- ppi_res[["table"]]
 
 ## radar plot for hub nodes
 top_nodes <- ppi_res$name |> head(5)
-node_info <- get_node_profile(ppi_res, node_name = top_nodes[2])
-p2 <- radar_plot(node_info, title = "Centrality profile of IL1B")
-p2
+node_info <- get_node_profile(ppi_res, node_name = top_nodes[3])
+p3 <- radar_plot(node_info, title = "Centrality profile of IL1B")
+p3
+
+node_info2 <- get_node_profile(ppi_res, node_name = top_nodes[5])
+p4 <- radar_plot(node_info2, title = "Centrality profile of JUN", fill_color = "#D59390", line_color = "#D59380")
+p4
+
+aplot::plot_list(p3, p4)
+
+
+## MCL clustering
+ppi_new1 <- run_MCL(ppi_new, inflation = 2.5)
+
+## louvain clustering
+ppi_new2 <- run_louvain(ppi_new1, resolution = 0.6)
