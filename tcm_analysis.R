@@ -160,8 +160,135 @@ p4
 aplot::plot_list(p3, p4)
 
 
-## MCL clustering
+## MCL clustering (optional)
 ppi_new1 <- run_MCL(ppi_new, inflation = 2.5)
 
-## louvain clustering
-ppi_new2 <- run_louvain(ppi_new1, resolution = 0.6)
+## louvain clustering (recommended)
+set.seed(42)
+ppi_new1 <- run_louvain(ppi_new1, resolution = 0.6)
+p5 <- ggraph(ppi_new1, layout = 'kk') +
+  geom_edge_link() +
+  geom_point_interactive(
+    mapping = aes(
+      x = x, 
+      y = y,
+      color = louvain_cluster,
+      size = betweenness,
+      tooltip = name,
+      data_id = name
+    )
+  ) +
+  geom_text_repel(data = td_filter(degree > 60),
+                  mapping = aes(x = x, y = y, label = name), bg.color ='white'
+  ) +
+  theme_graph()
+
+girafe(ggobj = p5)
+
+
+
+
+
+## subgraph for top nodes
+top_nodes <- head(ppi_res$name, 10)
+subg <- igraph::induced_subgraph(ppi_new, vids = top_nodes)
+plot(subg)
+
+
+p3 <- ggtangle::ggplot(subg, layout = "kk") +
+  geom_edge(
+    colour  = "grey80",
+    alpha   = 0.75,
+    linewidth = 0.15,
+    lineend  = "round"
+  ) +
+  geom_point(
+    aes(colour = Score_network, size = betweenness),
+    alpha = 0.85
+  ) +
+  geom_text_repel(
+    aes(label = name, colour = degree),
+    size          = 3.5,
+    fontface      = "bold",     
+    force         = 1.8,
+    max.overlaps  = 50,
+    box.padding   = unit(0.2, "lines"),
+    point.padding = unit(0.15, "lines"),
+    segment.size  = 0.1,
+    segment.color = "grey80",
+    show.legend   = FALSE
+  ) +
+  scale_color_gradientn(
+    name    = "Score_network",
+    colours = c("#4DBBD5FF", "#E64B35FF")
+  ) +
+  scale_size_continuous(
+    name  = "Betweenness",
+    range = c(1.5, 6)
+  ) +
+  theme_void() +
+  theme(
+    legend.position = "right",
+    legend.title    = element_text(size = 11, face = "bold"),
+    legend.text     = element_text(size = 9),
+    plot.margin     = unit(c(0.6, 0.8, 0.6, 0.8), "cm"),
+    plot.background = element_rect(fill = "white", colour = NA),
+    text            = element_text(face = "bold"))
+
+print(p3)
+
+
+
+## top nodes enrichment analysis
+topnodes_go <- enrichGO(top_nodes, OrgDb='org.Hs.eg.db', keyType="SYMBOL", ont = "BP")
+tn_p <- gglollipop(topnodes_go, show_count = FALSE)
+tn_p
+
+
+## top nodes PPI networks visualization
+p3 <- ggtangle::ggplot(subg, layout = "kk") +
+  geom_edge(
+    colour  = "grey70",
+    alpha   = 0.75,
+    linewidth = 0.15,
+    lineend  = "round"
+  ) +
+  geom_point(
+    aes(colour = Score_col, size = betweenness),
+    alpha = 0.9
+  ) +
+  geom_text(
+    aes(label = name),
+    colour      = "black",    
+    size        = 3,        
+    fontface    = "bold",
+    show.legend = FALSE      
+  )+
+  scale_color_gradientn(
+    name    = "node score",
+    colours = c("#4DBBD5FF", "#FFDC91", "#E64B35FF"),
+    limits  = range(igraph::vertex_attr(subg)$Score_network)
+  ) +
+  scale_size_continuous(
+    name  = "Betweenness",
+    range = c(10, 20)   
+  ) +
+  theme_void() +
+  theme(
+    legend.position = "right",
+    legend.title    = element_text(size = 11, face = "bold"),
+    legend.text     = element_text(size = 9),
+    plot.margin     = unit(c(0.6, 0.8, 0.6, 0.8), "cm"),
+    plot.background = element_rect(fill = "white", colour = NA),
+    text            = element_text(face = "bold")
+  )
+
+print(p3)
+
+
+
+
+
+
+
+
