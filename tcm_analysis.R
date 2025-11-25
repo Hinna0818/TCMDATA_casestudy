@@ -1,5 +1,4 @@
 #' TCM analysis of DN progression
-
 library(TCMDATA)
 library(ggalluvial)
 library(clusterProfiler)
@@ -531,6 +530,3 @@ qx_p <- ggtangle::ggplot(qx_g, layout = "circle") +
   theme_void() 
 
 qx_p
-
-
-
