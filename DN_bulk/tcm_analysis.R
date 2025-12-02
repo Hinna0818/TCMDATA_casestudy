@@ -3,6 +3,7 @@ library(TCMDATA)
 library(ggalluvial)
 library(clusterProfiler)
 library(dplyr)
+library(igraph)
 
 load("../data/GSE142025_DEGs/deg_all_sig.rda")
 df1_sig <- deg_all_sig[[1]]
@@ -161,6 +162,7 @@ aplot::plot_list(p3, p4)
 
 ## MCL clustering (optional)
 ppi_new1 <- run_MCL(ppi_new, inflation = 2.5)
+#saveRDS(ppi_new, file = "../data/ppi_example.rds")
 
 ## louvain clustering (recommended)
 set.seed(42)
@@ -299,6 +301,66 @@ module.ora.res <- compareCluster(name ~ louvain_cluster, data = module.genes,
                                  fun = enrichGO, keyType = "SYMBOL", OrgDb=org.Hs.eg.db, ont = "BP")
 
 dotplot(module.ora.res, label_format = 70)+ set_enrichplot_color(type='fill', transform='log10', colors=c("red","blue"))
+
+
+## using MCODE for PPI clustering
+mcode_res <- runMCODE(ppi_new)
+V(ppi_new)$mcode_cluster <- NA
+for(mod in names(mcode_res$complexes)) {
+  V(ppi_new)$mcode_cluster[ V(ppi_new)$name %in% mcode_res$complexes[[mod]] ] <- mod
+}
+
+V(ppi_new)$mcode_score <- mcode_res$scores[V(ppi_new)$name]
+
+## extract MCODE cluster 1 graph
+c1_nodes <- V(ppi_new)$name[V(ppi_new)$mcode_cluster == "Module_1"]
+subg_cluster1 <- induced_subgraph(ppi_new, vids = na.omit(c1_nodes))
+
+ggtangle::ggplot(subg_cluster1, layout = "kk") +
+  geom_edge(
+    colour  = "grey70",
+    alpha   = 0.75,
+    linewidth = 0.15,
+    lineend  = "round"
+  ) +
+  geom_point(
+    aes(colour = Score_network, size = betweenness),
+    alpha = 0.9
+  ) +
+  geom_text(
+    aes(label = name),
+    colour      = "black",    
+    size        = 3,        
+    fontface    = "bold",
+    show.legend = FALSE      
+  )+
+  scale_color_gradientn(
+    name    = "node score",
+    colours = c("#4DBBD5FF", "#FFDC91", "#E64B35FF"),
+    limits  = range(igraph::vertex_attr(subg_cluster1)$Score_network)
+  ) +
+  scale_size_continuous(
+    name  = "Betweenness",
+    range = c(10, 15)   
+  ) +
+  theme_void() +
+  theme(
+    legend.position = "right",
+    legend.title    = element_text(size = 11, face = "bold"),
+    legend.text     = element_text(size = 9),
+    plot.margin     = unit(c(0.6, 0.8, 0.6, 0.8), "cm"),
+    plot.background = element_rect(fill = "white", colour = NA),
+    text            = element_text(face = "bold")
+  )
+
+
+## MCODE cluster 1 enrichment analysis
+c1 <- enrichGO(c1_nodes, OrgDb='org.Hs.eg.db', keyType="SYMBOL", ont = "all")
+c1go <- gglollipop(c1, line.col = "orange", split = "ONTOLOGY",
+                   line.type = "dashed", palette = "PiYG", top_n = 5, show_count = F) + 
+  facet_grid(ONTOLOGY ~ ., scales = "free_y") +
+  theme(strip.text.y = element_text(angle = 0)) 
+c1go
 
 
 
@@ -530,3 +592,6 @@ qx_p <- ggtangle::ggplot(qx_g, layout = "circle") +
   theme_void() 
 
 qx_p
+
+
+
