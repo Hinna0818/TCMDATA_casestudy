@@ -3,8 +3,8 @@ library(Seurat)
 library(ggplot2)
 library(dplyr)
 library(DoubletFinder)
-library(ggsci)
 library(ggsc)
+library(tidydr)
 
 ## preprocess
 # load data and subset
@@ -77,8 +77,8 @@ names(new.cluster.ids) <- levels(dkd)
 dkd <- RenameIdents(dkd, new.cluster.ids)
 dkd$cell_type <- Idents(dkd)
 
-## tsne after annotation
-p2 <- sc_dim(dkd, reduction = "tsne", geom = geom_bgpoint, pointsize = 1) + theme_classic()
+## t-sne after annotation
+p2 <- sc_dim(dkd, reduction = "tsne", geom = geom_bgpoint, pointsize = 1) + theme_dr() + theme(panel.grid = element_blank())
 p2
 
 
