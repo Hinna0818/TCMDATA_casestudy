@@ -1,4 +1,7 @@
-#devtools::install_github("sqjin/CellChat")
+## run cellchat analysis for GSE209781
+
+# devtools::install_github("sqjin/CellChat")
+
 library(CellChat)
 library(Seurat)
 library(ggplot2)
