@@ -1,4 +1,5 @@
 ## run cellchat analysis for GSE209781
+# Author: Nan He
 
 # devtools::install_github("sqjin/CellChat")
 
