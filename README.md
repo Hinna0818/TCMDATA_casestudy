@@ -10,7 +10,7 @@ We integrated **Network Pharmacology** with **Single-Cell RNA sequencing (scRNA-
 1.  **Data Retrieval**: Used `TCMDATA` to fetch Scorpion ingredients and targets.
 2.  **PPI Network**: Identified Hub Genes using topological metrics and clustering methods.
 3.  **scRNA-seq Mapping**: Validated that core targets are predominantly expressed in **Macrophages, Neutrophils, and NK/T Cells**.
-4.  **Cell-Cell Interaction (CCI)**: Visualized communication alterations using `CellChat`.
+4.  **Cell-Cell Interaction (CCI)**: Visualized communication alterations using `CellChat` R package to support the findings in bulk RNA-seq.
 
 ## Key Biological Findings
 
